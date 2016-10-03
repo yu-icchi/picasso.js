@@ -40,13 +40,12 @@ function createModel2(schema, data) {
   switch (type) {
     case TYPE.OBJECT:
       _.forEach(schema.properties, (prop, key) => {
-        const d = data && data[key];
-        model[key] = createModel2(prop, d);
+        model[key] = createModel2(prop, data && data[key]);
       });
       break;
     case TYPE.ARRAY:
       if (_.isArray(schema.items)) {
-        return _.map(schema.items, (item, i) => createModel2(item, data[i]));
+        return _.map(schema.items, (item, i) => createModel2(item, data && data[i]));
       }
       if (_.isPlainObject(schema.items)) {
         return _.map(data, (d) => createModel2(schema.items, d));
@@ -182,6 +181,7 @@ function radio(radios, type, model) {
       type: 'radio',
       name: key,
       value: radio.value,
+      checked: radio.value === model(),
       onclick: m.withAttr('value', (value) => convertType(type, model, value))
     })]));
   });
@@ -192,6 +192,7 @@ function select(selects, type, model) {
   selects = [{title: '', value: null}].concat(selects);
   const options = _.map(selects, (select) => {
     return (m('option', {
+      selected: select.value === model(),
       value: select.value
     }, select.title))
   });
