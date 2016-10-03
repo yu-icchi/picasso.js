@@ -27,19 +27,19 @@ exports.add = function(config) {
       'fuga3'
     ],
     list: [
-      'test',
-      100,
-      3.14,
-      false,
-      {
-        id: 'id'
-      }
+      // 'test',
+      // 100,
+      // 3.14,
+      // false,
+      // {
+      //   id: 'id'
+      // }
     ],
     multi: [
-      {
-        k1: 'v1',
-        k2: true
-      }
+      // {
+      //   k1: 'v1',
+      //   k2: true
+      // }
     ]
   };
 

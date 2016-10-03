@@ -40,7 +40,8 @@ function createModel2(schema, data) {
   switch (type) {
     case TYPE.OBJECT:
       _.forEach(schema.properties, (prop, key) => {
-        model[key] = createModel2(prop, data[key]);
+        const d = data && data[key];
+        model[key] = createModel2(prop, d);
       });
       break;
     case TYPE.ARRAY:
