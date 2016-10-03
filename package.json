@@ -1,0 +1,36 @@
+{
+  "name": "picasso.js",
+  "version": "0.0.0",
+  "description": "Admin SPA Framework",
+  "main": "dist/picasso.js",
+  "scripts": {
+    "clean": "node_modules/.bin/rimraf dist/",
+    "build": "node_modules/.bin/webpack",
+    "start": "node_modules/.bin/webpack-dev-server --inline --hot",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yu-ichiko/picasso.js.git"
+  },
+  "author": "yu-ichiko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yu-ichiko/picasso.js/issues"
+  },
+  "homepage": "https://github.com/yu-ichiko/picasso.js#readme",
+  "devDependencies": {
+    "babel-core": "^6.16.0",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.16.0",
+    "babel-preset-es2016": "^6.16.0",
+    "babel-preset-es2017": "^6.16.0",
+    "lodash": "^4.16.2",
+    "mithril": "^0.2.5",
+    "msx-loader": "^0.4.0",
+    "rimraf": "^2.5.4",
+    "uuid": "^2.0.3",
+    "webpack": "^1.13.2",
+    "webpack-dev-server": "^1.16.1"
+  }
+}
