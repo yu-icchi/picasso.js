@@ -156,7 +156,10 @@ function convertType(type, model, value) {
   } else {
     value = String(value);
   }
-  model(value);
+
+  if (_.isFunction(model)) {
+    model(value);
+  }
 }
 
 function text(inputType, type, model) {
@@ -212,7 +215,7 @@ function checkbox(boxes, schema, model) {
       onclick: m.withAttr('checked', (isChecked) => {
         if (isChecked) {
           convertType(schema.items.type, model[i], box);
-        } else {
+        } else if (_.isFunction(model[i])) {
           model[i](null);
         }
       })
@@ -346,11 +349,15 @@ exports.controller = function(schema, data) {
 
   this.json = () => JSON.stringify(this.model, null, 2);
   this.json2 = () => JSON.stringify(this.model2, null, 2);
+  this.submit = () => {
+    console.log('submit');
+  };
 };
 
 exports.view = function(ctrl) {
   const dom = createInputDom(ctrl.schema, ctrl.model2);
+  dom.push(m('button', {onclick: ctrl.submit}, 'submit'));
   //dom.push(m('pre', ctrl.json()));
   dom.push(m('pre', ctrl.json2()));
-  return m('div', dom);
+  return m('form', dom);
 };
