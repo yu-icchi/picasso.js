@@ -1,0 +1,11 @@
+{
+  "user": [
+    {"_id": "test01", "name": "name01", "age": 10},
+    {"_id": "test02", "name": "name02", "age": 20},
+    {"_id": "test03", "name": "name03", "age": 30}
+  ],
+  "hoge": [
+    {"_id": "hoge01", "name": "hoge_01", "age": 11},
+    {"_id": "hoge02", "name": "hoge_02", "age": 12}
+  ]
+}

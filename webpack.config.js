@@ -19,7 +19,15 @@ module.exports = {
       {test: /\.js$|\.jsx$/, exclude: /node_modules/, loader: 'babel-loader'}
     ]
   },
+  resolve: {
+    alias: {
+      'handlebars' : 'handlebars/dist/handlebars.js'
+    }
+  },
   devServer: {
-    contentBase: './public'
+    contentBase: './public',
+    proxy: {
+      "*": "http://localhost:3000"
+    }
   }
 };

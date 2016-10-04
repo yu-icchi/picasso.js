@@ -1,3 +1,7 @@
+/**
+ * @file Dynamic Forms
+ */
+
 'use strict';
 
 const _ = require('lodash');
@@ -14,46 +18,33 @@ const TYPE = {
   STRING: 'string'
 };
 
-function getValue(schema, data, key, idx) {
-  let value = data && data[key];
-
-  if (!_.isUndefined(idx)) {
-    value = data && data[key] && data[key][idx];
-  }
-
-  if (_.isUndefined(value)) {
-    value = schema.default ? schema.default : null;
-  }
-  return value;
-}
-
-function getValue2(schema, data) {
+function getValue(schema, data) {
   if (_.isUndefined(data)) {
     data = schema.default ? schema.default : null;
   }
   return data;
 }
 
-function createModel2(schema, data) {
+function createModel(schema, data) {
   const model = {};
   const type = schema.type.toLowerCase();
   switch (type) {
     case TYPE.OBJECT:
       _.forEach(schema.properties, (prop, key) => {
-        model[key] = createModel2(prop, data && data[key]);
+        model[key] = createModel(prop, data && data[key]);
       });
       break;
     case TYPE.ARRAY:
       if (_.isArray(schema.items)) {
-        return _.map(schema.items, (item, i) => createModel2(item, data && data[i]));
+        return _.map(schema.items, (item, i) => createModel(item, data && data[i]));
       }
       if (_.isPlainObject(schema.items)) {
-        return _.map(data, (d) => createModel2(schema.items, d));
+        return _.map(data, (d) => createModel(schema.items, d));
       }
       break;
   }
 
-  let value = getValue2(schema, data);
+  let value = getValue(schema, data);
   switch (type) {
     // ここから下は別の関数にしたほうがいいかも
     case TYPE.BOOLEAN:
@@ -81,61 +72,8 @@ function createModel2(schema, data) {
   return model;
 }
 
-function createModel(schema, data) {
-  data = data || {};
-  const model = {};
-
-  _.forEach(schema.properties, (prop, key) => {
-    switch (prop.type.toLowerCase()) {
-      case TYPE.OBJECT:
-        model[key] = createModel(prop, data[key]);
-        break;
-      case TYPE.ARRAY:
-        model[key] = [];
-        // fixed array
-        if (_.isArray(prop.items)) {
-          _.forEach(prop.items, (item, idx) => {
-            if (item.type.toLowerCase() === TYPE.OBJECT) {
-              model[key].push(createModel(item, data[key]));
-            } else {
-              const value = getValue(item, data, key, idx);
-              model[key][idx] = m.prop(value); // nullは保存できない
-            }
-          });
-        }
-        // additional array
-        if (_.isPlainObject(prop.items)) {
-          if (prop.items.type.toLowerCase() === TYPE.OBJECT) {
-            model[key].push(createModel(prop.items, data[key]));
-          } else if (prop.items.enum) {
-            model[key] = _.map(prop.items.enum, () => m.prop(null));
-          } else {
-            const value = getValue(prop, data, key);
-            if (value) {
-              model[key] = _.map(value, (v) => m.prop(v));
-            } else {
-              model[key].push(m.prop(null));
-            }
-          }
-        }
-        break;
-      default:
-        const value = getValue(prop, data, key);
-        model[key] = m.prop(value);
-        break;
-    }
-  });
-
-  return model;
-}
-
 function addModel(model, schema) {
-  if (schema.type === 'object') {
-    model.push(createModel(schema));
-  } else {
-    model.push(m.prop(null));
-  }
-  // model.push(createModel2(schema));
+  model.push(createModel(schema));
 }
 
 function removeModel(model, i) {
@@ -205,18 +143,27 @@ function select(selects, type, model) {
   }, options);
 }
 
-function checkbox(boxes, schema, model) {
+function checkbox(boxes, schema, models) {
   const key = uuid.v4();
-  return _.map(boxes, (box, i) => {
+  return _.map(boxes, (box) => {
     return (m('label', [box, m('input', {
       type: 'checkbox',
       name: key,
       value: box,
       onclick: m.withAttr('checked', (isChecked) => {
+        let idx = -1;
+        _.forEach(models, (model, i) => {
+          if (model() === box) {
+            idx = i;
+            return false; // break
+          }
+        });
+
         if (isChecked) {
-          convertType(schema.items.type, model[i], box);
-        } else if (_.isFunction(model[i])) {
-          model[i](null);
+          models.push(m.prop(box));
+          convertType(schema.items.type, models[idx], box);
+        } else if (idx >= 0) {
+          models.splice(idx, 1);
         }
       })
     })]));
@@ -260,7 +207,7 @@ function createInputType(schema, model) {
     case TYPE.INTEGER:
       return text('number', TYPE.INTEGER, model);
     case TYPE.NUMBER:
-      return text('number', TYPE.NUMBER, model);
+      return text('text', TYPE.NUMBER, model);
     case TYPE.STRING:
       return text('text', TYPE.STRING, model);
     default:
@@ -296,7 +243,13 @@ function createInputDom(schema, model) {
           dom.push(m('div', arr));
         }
         if (_.isPlainObject(prop.items)) {
-          if (prop.items.enum) {
+          // `schema`
+          // items: {
+          //   type: 'string',
+          //   enum: ['a', 'b', 'c']
+          // },
+          // uniqItems: true
+          if (prop.items.enum && prop.uniqItems) {
             // fixed array
             dom.push(m('label', 'checkbox'));
             dom.push(checkbox(prop.items.enum, prop, obj));
@@ -304,7 +257,7 @@ function createInputDom(schema, model) {
           } else {
             // additional array
             // add button
-            const addExec = addModel.bind(this, obj, prop.items);
+            const addExec = addModel.bind(this, obj, prop.items); // TODO: ここのaddButtonがformタグ内だとリクエストになってしまい問題になる
             dom.push(m('button', {onclick: addExec}, 'add'));
             dom.push(m('br'));
             if (prop.items.type.toLowerCase() === TYPE.OBJECT) {
@@ -345,19 +298,16 @@ function createInputDom(schema, model) {
 exports.controller = function(schema, data) {
   this.schema = schema;
   this.model = createModel(schema, data);
-  this.model2 = createModel2(schema, data);
 
   this.json = () => JSON.stringify(this.model, null, 2);
-  this.json2 = () => JSON.stringify(this.model2, null, 2);
   this.submit = () => {
     console.log('submit');
   };
 };
 
 exports.view = function(ctrl) {
-  const dom = createInputDom(ctrl.schema, ctrl.model2);
+  const dom = createInputDom(ctrl.schema, ctrl.model);
   dom.push(m('button', {onclick: ctrl.submit}, 'submit'));
-  //dom.push(m('pre', ctrl.json()));
-  dom.push(m('pre', ctrl.json2()));
-  return m('form', dom);
+  dom.push(m('pre', ctrl.json()));
+  return m('div', dom); // TODO: ここをformにするとうまくいかなくなる
 };

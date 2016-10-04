@@ -1,4 +1,5 @@
 var user_spec = {
+  key: 'user_spec',
   title: 'ユーザ',
   route: '/user/:id',
   model: {
@@ -89,7 +90,8 @@ var user_spec = {
             4,
             5
           ]
-        }
+        },
+        uniqItems: true
       },
       list: {
         type: 'array',
@@ -147,44 +149,43 @@ var user_spec = {
       items: [
         {
           title: 'LINK',
-          template: '<a href="/user/{{:id}}/detail">{{name}}</a>'
+          template: '<a href="#/hoge">{{name}}</a>'
         },
         {
           title: 'なまえ',
-          template: '{{_id}} ({{name}})'
+          template: '{{_id}}({{name}})'
         },
         {
           key: 'age',
           title: '年齢'
+        },
+        {
+          key: 'age',
+          title: '年齢2',
+          template: '{{this}}歳'
         }
       ]
     },
-    action: [
-      {
-        type: 'create',
+    action: {
+      create: {
         api: 'POST:/data'
       },
-      {
-        type: 'read',
-        api: 'GET:/data?model=User&query_type=all'
+      read: {
+        api: 'GET:/user'
       },
-      {
-        type: 'update',
+      update: {
         api: 'PUT:/data'
       },
-      {
-        type: 'delete',
+      delete: {
         api: 'DELETE:/data'
       },
-      {
-        type: 'import',
+      import: {
         api: 'POST:/import'
       },
-      {
-        type: 'export',
+      export: {
         api: 'GET:/export?model=User'
       }
-    ],
+    },
     search: {
       api: 'GET:/data?model=User',
       type: 'radio',
