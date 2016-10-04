@@ -25,11 +25,11 @@ exports.init = function(config) {
   };
   const menus = [];
   _.forEach(pageMap, (page) => {
-    if (page.route && _.isString(page.route)) {
-      route[page.route] = m.component(view, page.view);
+    if (page.url && _.isString(page.url)) {
+      route[page.url] = m.component(view, page);
       menus.push({
         title: page.title,
-        route: page.route
+        url: page.url
       });
     }
   });

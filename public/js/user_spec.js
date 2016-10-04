@@ -1,7 +1,7 @@
 var user_spec = {
   key: 'user_spec',
   title: 'ユーザ',
-  route: '/user/:id',
+  url: '/user/:id',
   model: {
     name: 'User',
     primary_key: '_id',

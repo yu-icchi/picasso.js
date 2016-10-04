@@ -17,11 +17,24 @@ function getTableContext(items) {
       type = 'template';
       exec = hbs.compile(item.template);
     } else {
+      // key: 'key'
       type = 'key';
       exec = function(data) {return data && data[item.key]};
     }
     return {type, exec};
   });
+}
+
+function getParams(url) {
+  const params = {};
+  _.forEach(url.split('/'), (value) => {
+    if (!/^:/.test(value)) {
+      return;
+    }
+    const key = value.slice(1); // `:`をカットする
+    params[key] = m.route.param(key);
+  });
+  return params;
 }
 
 function parseApi(api) {
@@ -33,24 +46,25 @@ function parseApi(api) {
 }
 
 exports.controller = function(schema) {
-  console.log(m.route.param('id'));
-  this.items = schema.list.items;
+  const params = getParams(schema.url);
+  console.log(params);
 
-  const params = parseApi(schema.action.read.api);
-  this.res = m.request(params);
+  this.items = schema.view.list.items;
+  const options = parseApi(schema.view.action.read.api);
+  this.res = m.request(options);
 };
 
 exports.view = function(ctrl) {
   const list = ctrl.res();
 
-  const tableContexts = getTableContext(ctrl.items);
+  const contexts = getTableContext(ctrl.items);
 
   // テーブル表示
   const table = [];
   _.forEach(list, (data) => {
     const inner = [];
-    for (let i = 0, len = tableContexts.length; i < len; i++) {
-      const context = tableContexts[i];
+    for (let i = 0, len = contexts.length; i < len; i++) {
+      const context = contexts[i];
       const value = context.exec(data);
       if (context.type === 'template') {
         inner.push(m('td', m.trust(value))); // HTMLを入れる場合はtrustメソッドを使用する

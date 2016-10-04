@@ -1,7 +1,7 @@
 var hoge_spec = {
   key: 'hoge_spec',
   title: 'HOGE',
-  route: '/hoge',
+  url: '/hoge',
   model: {
     name: 'Hoge',
     primary_key: '_id',

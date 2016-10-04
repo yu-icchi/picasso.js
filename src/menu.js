@@ -9,6 +9,6 @@ exports.controller = function(opt) {
 
 exports.view = function(ctrl) {
   return m('div', 'menu', _.map(ctrl.menus, (menu) => {
-    return m('li', m('a', {href: `#${menu.route}`}, menu.title))
+    return m('li', m('a', {href: `#${menu.url}`}, menu.title))
   }));
 };
