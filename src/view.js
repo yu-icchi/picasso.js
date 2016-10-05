@@ -1,28 +1,48 @@
+/**
+ * @file view component
+ */
+
 'use strict';
 
 const _ = require('lodash');
 const m = require('mithril');
 const hbs = require('handlebars');
 
-function getTableContext(items) {
-  return _.map(items, (item) => {
+function generateTable(items, list) {
+  const contexts = [];
+  const th = [];
+  _.forEach(items, (item) => {
     let type, exec;
     if (item.template && item.key) {
-      // template: 'this is {{this}}'
       type = 'template';
       const cc = hbs.compile(item.template);
       exec = function(data) {return data && data[item.key] && cc(data[item.key])};
     } else if (item.template) {
-      // template: 'this is {{pen}}'
       type = 'template';
       exec = hbs.compile(item.template);
     } else {
-      // key: 'key'
       type = 'key';
       exec = function(data) {return data && data[item.key]};
     }
-    return {type, exec};
+    contexts.push({type, exec});
+    th.push(m('th', item.title || '-'));
   });
+
+  const td = _.map(list, (data) => {
+    const inner = [];
+    for (let i = 0, len = contexts.length; i < len; i++) {
+      const context = contexts[i];
+      const value = context.exec(data);
+      if (context.type === 'template') {
+        inner.push(m('td', m.trust(value))); // HTMLを入れる場合はtrustメソッドを使用する
+      } else {
+        inner.push(m('td', value));
+      }
+    }
+    return m('tr', inner);
+  });
+
+  return m('table', [th, td]);
 }
 
 function getParams(url) {
@@ -31,8 +51,11 @@ function getParams(url) {
     if (!/^:/.test(value)) {
       return;
     }
-    const key = value.slice(1); // `:`をカットする
-    params[key] = m.route.param(key);
+    const key = value.slice(1); // sliceで`:`をカットする
+    const param = m.route.param(key);
+    if (param) {
+      params[key] = param;
+    }
   });
   return params;
 }
@@ -50,32 +73,15 @@ exports.controller = function(schema) {
   console.log(params);
 
   this.items = schema.view.list.items;
-  const options = parseApi(schema.view.action.read.api);
-  this.res = m.request(options);
+
+  this.list = m.request(parseApi(schema.view.action.read.api));
 };
 
 exports.view = function(ctrl) {
-  const list = ctrl.res();
-
-  const contexts = getTableContext(ctrl.items);
+  const list = ctrl.list();
 
   // テーブル表示
-  const table = [];
-  _.forEach(list, (data) => {
-    const inner = [];
-    for (let i = 0, len = contexts.length; i < len; i++) {
-      const context = contexts[i];
-      const value = context.exec(data);
-      if (context.type === 'template') {
-        inner.push(m('td', m.trust(value))); // HTMLを入れる場合はtrustメソッドを使用する
-      } else {
-        inner.push(m('td', value));
-      }
-    }
-    table.push(m('tr', inner));
-  });
+  const table = generateTable(ctrl.items, list);
 
-  return m('div', [
-    m('table', table)
-  ]);
+  return m('div', table);
 };
