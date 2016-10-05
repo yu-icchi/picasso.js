@@ -77,7 +77,7 @@ function addModel(model, schema) {
 }
 
 function removeModel(model, i) {
-  if (_.isArray(model)) {
+  if (_.isArray(model) && _.size(model) > 0) {
     model.splice(i, 1);
   }
 }
@@ -143,6 +143,17 @@ function select(selects, type, model) {
   }, options);
 }
 
+function checkedBox(value, models) {
+  let done = false;
+  _.forEach(models, (model) => {
+    if (value === model()) {
+      done = true;
+      return false; // break
+    }
+  });
+  return done;
+}
+
 function checkbox(boxes, schema, models) {
   const key = uuid.v4();
   return _.map(boxes, (box) => {
@@ -150,6 +161,7 @@ function checkbox(boxes, schema, models) {
       type: 'checkbox',
       name: key,
       value: box,
+      checked: checkedBox(box, models),
       onclick: m.withAttr('checked', (isChecked) => {
         let idx = -1;
         _.forEach(models, (model, i) => {

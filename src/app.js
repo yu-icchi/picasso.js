@@ -9,7 +9,7 @@ const view = require('./view');
 const error404 = require('./404');
 
 const pageMap = {};
-let route = {};
+const route = {};
 
 // 先にconfigを追加して
 exports.add = function(config) {
@@ -26,9 +26,16 @@ exports.init = function(config) {
 
   // page route
   const mainEl = document.getElementById('main');
-  route = {
-    '/404': error404 // 404 page
-  };
+
+  let defaultRoute;
+  if (config['error_404']) {
+    console.log('404');
+    defaultRoute = '/';
+  } else {
+    route['/404'] = error404; // default 404 page
+    defaultRoute = '/404';
+  }
+
   const menus = [];
   _.forEach(pageMap, (page) => {
     if (page.url && _.isString(page.url)) {
@@ -40,7 +47,7 @@ exports.init = function(config) {
     }
   });
   m.route.mode = 'hash'; // m.routeよりも前に記述しておく必要がある
-  m.route(mainEl, '/404', route);
+  m.route(mainEl, defaultRoute, route);
 
   // menu
   const menuEl = document.getElementById('menu');

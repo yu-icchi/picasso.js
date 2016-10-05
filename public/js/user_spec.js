@@ -142,6 +142,7 @@ var user_spec = {
   view: {
     title: 'テーブル',
     list: {
+      // ページングのときのURLをどうするか？
       size: 20,
       sort: {
         name: 'asc'
@@ -187,18 +188,22 @@ var user_spec = {
       }
     },
     search: {
-      api: 'GET:/data?model=User',
+      api: 'GET:/user',
       type: 'radio',
       selector: [
         {
           key: '_id',
           title: 'ID',
-          query: '_id: /^{{this}}/'
+          query: {
+            q: '_id: /^{{this}}/'
+          }
         },
         {
           key: 'name',
           title: 'NAME',
-          query: 'name: /^{{name}}/'
+          query: {
+            q: 'name: /^{{name}}/'
+          }
         }
       ],
       autocomplete: {
