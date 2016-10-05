@@ -7,6 +7,7 @@
 const _ = require('lodash');
 const uuid = require('uuid');
 const m = require('mithril');
+const tv4 = require('tv4');
 
 const TYPE = {
   NULL: 'null',
@@ -82,7 +83,8 @@ function removeModel(model, i) {
   }
 }
 
-function convertType(type, model, value) {
+function convertType(type, model, value, schema) {
+
   if (value === TYPE.NULL) {
     value = null;
   } else if(type === TYPE.BOOLEAN) {
@@ -95,27 +97,31 @@ function convertType(type, model, value) {
     value = String(value);
   }
 
+  // スキーマチェック
+  const valid = tv4.validateResult(value, schema);
+  console.log(valid);
+
   if (_.isFunction(model)) {
     model(value);
   }
 }
 
-function text(inputType, type, model) {
+function text(inputType, type, schema, model) {
   return m('input', {
     type: inputType,
     value: model(),
-    onchange: m.withAttr('value', (value) => convertType(type, model, value))
+    onchange: m.withAttr('value', (value) => convertType(type, model, value, schema))
   });
 }
 
-function textarea(model) {
+function textarea(schema, model) {
   return m('textarea', {
     value: model(),
-    onchange: m.withAttr('value', model)
+    onchange: m.withAttr('value', (value) => convertType(TYPE.STRING, model, value, schema))
   });
 }
 
-function radio(radios, type, model) {
+function radio(radios, type, schema, model) {
   const key = uuid.v4();
   return _.map(radios, (radio) => {
     return (m('label', [radio.title, m('input', {
@@ -123,12 +129,12 @@ function radio(radios, type, model) {
       name: key,
       value: radio.value,
       checked: radio.value === model(),
-      onclick: m.withAttr('value', (value) => convertType(type, model, value))
+      onclick: m.withAttr('value', (value) => convertType(type, model, value, schema))
     })]));
   });
 }
 
-function select(selects, type, model) {
+function select(selects, type, schema, model) {
   const key = uuid.v4();
   selects = [{title: '', value: null}].concat(selects);
   const options = _.map(selects, (select) => {
@@ -139,7 +145,7 @@ function select(selects, type, model) {
   });
   return m('select', {
     name: key,
-    onchange: m.withAttr('value', (value) => convertType(type, model, value))
+    onchange: m.withAttr('value', (value) => convertType(type, model, value, schema))
   }, options);
 }
 
@@ -173,7 +179,7 @@ function checkbox(boxes, schema, models) {
 
         if (isChecked) {
           models.push(m.prop(box));
-          convertType(schema.items.type, models[idx], box);
+          convertType(schema.items.type, models[idx], box, schema);
         } else if (idx >= 0) {
           models.splice(idx, 1);
         }
@@ -185,11 +191,11 @@ function checkbox(boxes, schema, models) {
 function createInputType(schema, model) {
 
   if (schema.type === TYPE.STRING && schema.form === 'textarea') {
-    return textarea(model);
+    return textarea(schema, model);
   }
 
   if (schema.type === TYPE.STRING && schema.form === 'password') {
-    return text('password', TYPE.STRING, model);
+    return text('password', TYPE.STRING, schema, model);
   }
 
   if (_.isArray(schema.enum) && !_.isEmpty(schema.enum)) {
@@ -198,9 +204,9 @@ function createInputType(schema, model) {
       return {title, value};
     });
     if (schema.form === 'select') {
-      return select(list, schema.type, model);
+      return select(list, schema.type, schema, model);
     } else {
-      return radio(list, schema.type, model);
+      return radio(list, schema.type, schema, model);
     }
   }
 
@@ -215,13 +221,13 @@ function createInputType(schema, model) {
           title: 'false',
           value: false
         }
-      ], TYPE.BOOLEAN, model);
+      ], TYPE.BOOLEAN, schema, model);
     case TYPE.INTEGER:
-      return text('number', TYPE.INTEGER, model);
+      return text('number', TYPE.INTEGER, schema, model);
     case TYPE.NUMBER:
-      return text('text', TYPE.NUMBER, model);
+      return text('text', TYPE.NUMBER, schema, model);
     case TYPE.STRING:
-      return text('text', TYPE.STRING, model);
+      return text('text', TYPE.STRING, schema, model);
     default:
       return null;
   }
