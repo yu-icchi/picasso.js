@@ -83,42 +83,63 @@ function removeModel(model, i) {
   }
 }
 
-function convertType(type, model, value, schema) {
+function convertType(type, model, value) {
 
   if (value === TYPE.NULL) {
     value = null;
   } else if(type === TYPE.BOOLEAN) {
     value = value === 'true';
   } else if (type === TYPE.INTEGER) {
-    value = parseInt(value, 10);
+    const int = parseInt(value, 10);
+    if (!_.isNaN(int)) {
+      value = int;
+    }
   } else if (type === TYPE.NUMBER) {
-    value = Number(value);
+    const num = parseFloat(value);
+    if (!_.isNaN(num)) {
+      value = num;
+    }
   } else {
     value = String(value);
   }
-
-  // スキーマチェック
-  const valid = tv4.validateResult(value, schema);
-  console.log(valid);
 
   if (_.isFunction(model)) {
     model(value);
   }
 }
 
+function hasError(model, schema) {
+  const value = model();
+  const valid = tv4.validate(value, schema);
+  if (value && !valid) {
+    return 'has-error'; // TODO: ここは可変できるといいかも
+  }
+  return '';
+}
+
 function text(inputType, type, schema, model) {
-  return m('input', {
+  const opt = {
     type: inputType,
     value: model(),
-    onchange: m.withAttr('value', (value) => convertType(type, model, value, schema))
-  });
+    onchange: m.withAttr('value', (value) => convertType(type, model, value))
+  };
+  const err = hasError(model, schema);
+  if (err) {
+    opt.class = opt.class ? `${opt.class} ${err}` : err;
+  }
+  return m('input', opt);
 }
 
 function textarea(schema, model) {
-  return m('textarea', {
+  const opt = {
     value: model(),
-    onchange: m.withAttr('value', (value) => convertType(TYPE.STRING, model, value, schema))
-  });
+    onchange: m.withAttr('value', (value) => convertType(TYPE.STRING, model, value))
+  };
+  const err = hasError(model, schema);
+  if (err) {
+    opt.class = opt.class ? `${opt.class} ${err}` : err;
+  }
+  return m('textarea', opt);
 }
 
 function radio(radios, type, schema, model) {
@@ -145,7 +166,7 @@ function select(selects, type, schema, model) {
   });
   return m('select', {
     name: key,
-    onchange: m.withAttr('value', (value) => convertType(type, model, value, schema))
+    onchange: m.withAttr('value', (value) => convertType(type, model, value))
   }, options);
 }
 
@@ -179,7 +200,7 @@ function checkbox(boxes, schema, models) {
 
         if (isChecked) {
           models.push(m.prop(box));
-          convertType(schema.items.type, models[idx], box, schema);
+          convertType(schema.items.type, models[idx], box);
         } else if (idx >= 0) {
           models.splice(idx, 1);
         }
