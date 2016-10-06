@@ -42,7 +42,10 @@ function generateTable(items, list) {
     return m('tr', inner);
   });
 
-  return m('table', [th, td]);
+  return m('table', [
+    m('thead', th),
+    m('tbody', td)
+  ]);
 }
 
 function getParams(url) {
