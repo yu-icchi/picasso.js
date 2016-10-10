@@ -60,6 +60,7 @@ var user_spec = {
         type: 'object',
         properties: {
           str: {
+            title: 'STR',
             type: 'string'
           },
           int: {
@@ -80,6 +81,7 @@ var user_spec = {
         }
       },
       box: {
+        title: 'checkbox',
         type: 'array',
         items: {
           type: 'integer',
@@ -97,15 +99,19 @@ var user_spec = {
         type: 'array',
         items: [
           {
+            title: 'STR',
             type: 'string'
           },
           {
+            title: 'INT',
             type: 'integer'
           },
           {
+            title: 'NUM',
             type: 'number'
           },
           {
+            title: 'BOOL',
             type: 'boolean'
           },
           {

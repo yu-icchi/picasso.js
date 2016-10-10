@@ -2,7 +2,11 @@
  * @file Dynamic Forms
  */
 
+/*global componentHandler */
+
 'use strict';
+
+require('material-design-lite');
 
 const _ = require('lodash');
 const uuid = require('uuid');
@@ -119,19 +123,25 @@ function hasError(model, schema) {
 
 function text(inputType, type, schema, model) {
   const opt = {
+    class: 'mdl-textfield__input',
     type: inputType,
     value: model(),
+    oninput: m.withAttr('value', (value) => convertType(type, model, value)),
     onchange: m.withAttr('value', (value) => convertType(type, model, value))
   };
   const err = hasError(model, schema);
   if (err) {
     opt.class = opt.class ? `${opt.class} ${err}` : err;
   }
-  return m('input', opt);
+  return m('div[class=mdl-textfield mdl-js-textfield mdl-textfield--floating-label]', [
+    m('input', opt),
+    m('label[class=mdl-textfield__label]', schema.title)
+  ]);
 }
 
 function textarea(schema, model) {
   const opt = {
+    class: 'mdl-textfield__input',
     value: model(),
     onchange: m.withAttr('value', (value) => convertType(TYPE.STRING, model, value))
   };
@@ -139,14 +149,18 @@ function textarea(schema, model) {
   if (err) {
     opt.class = opt.class ? `${opt.class} ${err}` : err;
   }
-  return m('textarea', opt);
+  return m('div[class=mdl-textfield mdl-js-textfield mdl-textfield--floating-label]', [
+    m('textarea', opt),
+    m('label[class=mdl-textfield__label]', 'ラベル')
+  ]);
 }
 
 function radio(radios, type, schema, model) {
   const key = uuid.v4();
   return _.map(radios, (radio) => {
-    return (m('label', [radio.title, m('input', {
+    return (m('label[class=mdl-radio mdl-js-radio mdl-js-ripple-effect]', [radio.title, m('input', {
       type: 'radio',
+      class: 'mdl-radio__button',
       name: key,
       value: radio.value,
       checked: radio.value === model(),
@@ -164,10 +178,16 @@ function select(selects, type, schema, model) {
       value: select.value
     }, select.title))
   });
-  return m('select', {
-    name: key,
-    onchange: m.withAttr('value', (value) => convertType(type, model, value))
-  }, options);
+  return m('div[class=mdl-textfield mdl-js-textfield mdl-textfield--floating-label]', [
+    m('select', {
+      class: 'mdl-textfield__input',
+      name: key,
+      onchange: m.withAttr('value', (value) => convertType(type, model, value)),
+      // config: function() {
+      //   console.log('select', this);
+      // }
+    }, options)
+  ]);
 }
 
 function checkedBox(value, models) {
@@ -184,8 +204,9 @@ function checkedBox(value, models) {
 function checkbox(boxes, schema, models) {
   const key = uuid.v4();
   return _.map(boxes, (box) => {
-    return (m('label', [box, m('input', {
+    return (m('label[class=mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect]', [box, m('input', {
       type: 'checkbox',
+      class: 'mdl-checkbox__input',
       name: key,
       value: box,
       checked: checkedBox(box, models),
@@ -274,7 +295,6 @@ function createInputDom(schema, model) {
             if (item.type.toLowerCase() === TYPE.OBJECT) {
               arr.push(m('div', createInputDom(item, obj[idx])));
             } else {
-              arr.push(m('label', idx));
               arr.push(createInputType(item, obj[idx]));
               arr.push(m('br'));
             }
@@ -290,30 +310,37 @@ function createInputDom(schema, model) {
           // uniqItems: true
           if (prop.items.enum && prop.uniqItems) {
             // fixed array
-            dom.push(m('label', 'checkbox'));
             dom.push(checkbox(prop.items.enum, prop, obj));
             dom.push(m('br'));
           } else {
             // additional array
             // add button
             const addExec = addModel.bind(this, obj, prop.items); // TODO: ここのaddButtonがformタグ内だとリクエストになってしまい問題になる
-            dom.push(m('button', {onclick: addExec}, 'add'));
+            dom.push(m('button', {
+              class: 'mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent',
+              onclick: addExec
+            }, 'add'));
             dom.push(m('br'));
             if (prop.items.type.toLowerCase() === TYPE.OBJECT) {
               for (let i = 0, len = obj.length; i < len; i++) {
                 const inputs = createInputDom(prop.items, obj[i]);
                 // remove button
                 const remExec = removeModel.bind(this, obj, i);
-                inputs.push(m('button', {onclick: remExec}, 'remove'));
+                inputs.push(m('button', {
+                  class: 'mdl-button mdl-js-button mdl-js-ripple-effect',
+                  onclick: remExec
+                }, 'remove'));
                 dom.push(m('div', inputs));
               }
             } else {
               for (let i = 0, len = obj.length; i < len; i++) {
-                dom.push(m('label', i));
                 dom.push(createInputType(prop.items, obj[i]));
                 // remove button
                 const remExec = removeModel.bind(this, obj, i);
-                dom.push(m('button', {onclick: remExec}, 'remove'));
+                dom.push(m('button', {
+                  class: 'mdl-button mdl-js-button mdl-js-ripple-effect',
+                  onclick: remExec
+                }, 'remove'));
                 dom.push(m('br'));
               }
             }
@@ -321,10 +348,9 @@ function createInputDom(schema, model) {
         }
         break;
       default:
+        prop.title = prop.title || key;
         const input = createInputType(prop, obj);
         if (input) {
-          const title = prop.title || key;
-          dom.push(m('label', title));
           dom.push(input);
           dom.push(m('br'));
         }
@@ -342,11 +368,27 @@ exports.controller = function(schema, data) {
   this.submit = () => {
     console.log('submit');
   };
+  this.reset = () => {
+    console.log('reset');
+  };
 };
 
 exports.view = function(ctrl) {
   const dom = createInputDom(ctrl.schema, ctrl.model);
-  dom.push(m('button', {onclick: ctrl.submit}, 'submit'));
+  dom.push(m('button', {
+    class: 'mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect',
+    type: 'submit',
+    onclick: ctrl.submit
+  }, 'submit'));
+  dom.push(m('button', {
+    class: 'mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect',
+    type: 'reset',
+    onclick: ctrl.reset
+  }, 'reset'));
   dom.push(m('pre', ctrl.json()));
-  return m('div', dom); // TODO: ここをformにするとうまくいかなくなる
+  return m('div', {
+    config: () => {
+      componentHandler.upgradeDom();
+    }
+  }, dom); // TODO: ここをformにするとうまくいかなくなる
 };
