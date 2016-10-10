@@ -121,13 +121,13 @@ function hasError(model, schema) {
   return '';
 }
 
-function text(inputType, type, schema, model) {
+function text(inputType, schema, model) {
   const opt = {
     class: 'mdl-textfield__input',
     type: inputType,
     value: model(),
-    oninput: m.withAttr('value', (value) => convertType(type, model, value)),
-    onchange: m.withAttr('value', (value) => convertType(type, model, value))
+    oninput: m.withAttr('value', (value) => convertType(schema.type, model, value)),
+    onchange: m.withAttr('value', (value) => convertType(schema.type, model, value))
   };
   const err = hasError(model, schema);
   if (err) {
@@ -143,7 +143,8 @@ function textarea(schema, model) {
   const opt = {
     class: 'mdl-textfield__input',
     value: model(),
-    onchange: m.withAttr('value', (value) => convertType(TYPE.STRING, model, value))
+    oninput: m.withAttr('value', (value) => convertType(schema.type, model, value)),
+    onchange: m.withAttr('value', (value) => convertType(schema.type, model, value))
   };
   const err = hasError(model, schema);
   if (err) {
@@ -151,13 +152,13 @@ function textarea(schema, model) {
   }
   return m('div[class=mdl-textfield mdl-js-textfield mdl-textfield--floating-label]', [
     m('textarea', opt),
-    m('label[class=mdl-textfield__label]', 'ラベル')
+    m('label[class=mdl-textfield__label]', schema.title)
   ]);
 }
 
 function radio(radios, type, schema, model) {
   const key = uuid.v4();
-  return _.map(radios, (radio) => {
+  return m('div', _.map(radios, (radio) => {
     return (m('label[class=mdl-radio mdl-js-radio mdl-js-ripple-effect]', [radio.title, m('input', {
       type: 'radio',
       class: 'mdl-radio__button',
@@ -166,7 +167,7 @@ function radio(radios, type, schema, model) {
       checked: radio.value === model(),
       onclick: m.withAttr('value', (value) => convertType(type, model, value, schema))
     })]));
-  });
+  }));
 }
 
 function select(selects, type, schema, model) {
@@ -237,7 +238,7 @@ function createInputType(schema, model) {
   }
 
   if (schema.type === TYPE.STRING && schema.form === 'password') {
-    return text('password', TYPE.STRING, schema, model);
+    return text('password', schema, model);
   }
 
   if (_.isArray(schema.enum) && !_.isEmpty(schema.enum)) {
@@ -265,11 +266,11 @@ function createInputType(schema, model) {
         }
       ], TYPE.BOOLEAN, schema, model);
     case TYPE.INTEGER:
-      return text('number', TYPE.INTEGER, schema, model);
+      return text('number', schema, model);
     case TYPE.NUMBER:
-      return text('text', TYPE.NUMBER, schema, model);
+      return text('text', schema, model);
     case TYPE.STRING:
-      return text('text', TYPE.STRING, schema, model);
+      return text('text', schema, model);
     default:
       return null;
   }
