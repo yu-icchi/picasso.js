@@ -7,6 +7,7 @@
 'use strict';
 
 require('material-design-lite');
+require('flatpickr');
 
 const _ = require('lodash');
 const uuid = require('uuid');
@@ -231,7 +232,53 @@ function checkbox(boxes, schema, models) {
   })
 }
 
+function datePicker(schema, model) {
+  const opt = {
+    type: 'text',
+    class: 'mdl-textfield__input',
+    // onchange: m.withAttr('data-default-date', (value) => {
+    //   console.log('event', value);
+    // }),
+    config: (el, isInit, ctx) => {
+      el.flatpickr({
+        mode: 'single',
+        allowInput: true,
+        enableTime: true,
+        enableSeconds: true,
+        time_24hr: true,
+        onChange: (dateObj) => {
+          if (_.isEmpty(dateObj) || !dateObj[0]) {
+            return;
+          }
+          const value = dateObj[0];
+          model(new Date(value).getTime());
+          // el.value = new Date(value).getTime();
+          // el.setAttribute('data-default-date', new Date(value).toString());
+          // el.setAttribute('data-enable-time', 'true');
+          // componentHandler.upgradeDom();
+        }
+      });
+    }
+  };
+
+  const value = model();
+  if (value) {
+    opt['data-enable-time'] = true;
+    opt['data-default-date'] = new Date(value).toString();
+    opt.value = value;
+  }
+
+  return m('div[class=mdl-textfield mdl-js-textfield mdl-textfield--floating-label]', [
+    m('input', opt),
+    m('label[class=mdl-textfield__label]', schema.title)
+  ]);
+}
+
 function createInputType(schema, model) {
+
+  if (schema.form === 'date') {
+    return datePicker(schema, model);
+  }
 
   if (schema.type === TYPE.STRING && schema.form === 'textarea') {
     return textarea(schema, model);
@@ -315,21 +362,19 @@ function createInputDom(schema, model) {
             dom.push(m('br'));
           } else {
             // additional array
-            // add button
-            const addExec = addModel.bind(this, obj, prop.items); // TODO: ここのaddButtonがformタグ内だとリクエストになってしまい問題になる
+            // add button // TODO: ここのaddButtonがformタグ内だとリクエストになってしまい問題になる
             dom.push(m('button', {
               class: 'mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent',
-              onclick: addExec
+              onclick: addModel.bind(this, obj, prop.items)
             }, 'add'));
             dom.push(m('br'));
             if (prop.items.type.toLowerCase() === TYPE.OBJECT) {
               for (let i = 0, len = obj.length; i < len; i++) {
                 const inputs = createInputDom(prop.items, obj[i]);
                 // remove button
-                const remExec = removeModel.bind(this, obj, i);
                 inputs.push(m('button', {
                   class: 'mdl-button mdl-js-button mdl-js-ripple-effect',
-                  onclick: remExec
+                  onclick: removeModel.bind(this, obj, i)
                 }, 'remove'));
                 dom.push(m('div', inputs));
               }
@@ -337,10 +382,9 @@ function createInputDom(schema, model) {
               for (let i = 0, len = obj.length; i < len; i++) {
                 dom.push(createInputType(prop.items, obj[i]));
                 // remove button
-                const remExec = removeModel.bind(this, obj, i);
                 dom.push(m('button', {
                   class: 'mdl-button mdl-js-button mdl-js-ripple-effect',
-                  onclick: remExec
+                  onclick: removeModel.bind(this, obj, i)
                 }, 'remove'));
                 dom.push(m('br'));
               }
@@ -368,9 +412,20 @@ exports.controller = function(schema, data) {
   this.json = () => JSON.stringify(this.model, null, 2);
   this.submit = () => {
     console.log('submit');
+    console.log(JSON.stringify(this.model, null, 2));
+    const els = document.getElementsByClassName('flatpickr-calendar');
+    _.forEach(els, (el) => {
+      m.mount(el, null); // unmount
+      //el.parentNode.removeChild(el);
+    });
   };
   this.reset = () => {
     console.log('reset');
+    const els = document.getElementsByClassName('flatpickr-calendar');
+    _.forEach(els, (el) => {
+      m.mount(el, null); // unmount
+      //el.parentNode.removeChild(el);
+    });
   };
 };
 

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>picasso.js</title>
+    <link rel="stylesheet" href="css/flatpickr.min.css">
+    <link rel="stylesheet" href="css/datepicker.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.2.1/material.indigo-pink.min.css">
 </head>
@@ -11,6 +13,7 @@
     <div id="menu"></div>
     <div id="main"></div>
     <div id="form"></div>
+    <div id="flatpickr"></div>
 
     <script src="picasso.js"></script>
     <script src="js/user_spec.js"></script>
@@ -19,7 +22,12 @@
         Picasso.add(user_spec);
         Picasso.add(hoge_spec);
         Picasso.init('main');
-        Picasso.generateForm('user_spec', {});
+        Picasso.generateForm('user_spec', {
+            term: {
+                start: 1476327600000,
+                end: 1476414000000
+            }
+        });
     </script>
 </body>
 </html>

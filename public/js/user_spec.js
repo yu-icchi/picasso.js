@@ -29,6 +29,20 @@ var user_spec = {
         type: 'integer',
         default: 20
       },
+      term: {
+        title: 'term',
+        type: 'object',
+        properties: {
+          start: {
+            type: 'integer',
+            form: 'date'
+          },
+          end: {
+            type: 'integer',
+            form: 'date'
+          }
+        }
+      },
       gender: {
         title: '性別',
         type: 'string',

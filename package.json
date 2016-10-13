@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/yu-ichiko/picasso.js#readme",
   "dependencies": {
+    "flatpickr": "^2.0.5",
     "handlebars": "^4.0.5",
     "lodash": "^4.16.2",
     "material-design-lite": "^1.2.1",

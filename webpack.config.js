@@ -21,7 +21,8 @@ module.exports = {
   },
   resolve: {
     alias: {
-      'handlebars' : 'handlebars/dist/handlebars.js'
+      'handlebars': 'handlebars/dist/handlebars.js',
+      'material-datetime-picker': 'material-datetime-picker/dist/js/datepicker.js'
     }
   },
   devServer: {
